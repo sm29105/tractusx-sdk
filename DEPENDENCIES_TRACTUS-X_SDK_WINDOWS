@@ -79,7 +79,7 @@ pypi/pypi/-/pyyaml_env_tag/1.1, MIT, approved, #23867
 pypi/pypi/-/referencing/0.37.0, MIT, approved, clearlydefined
 pypi/pypi/-/requests-mock/1.12.1, Apache-2.0, approved, clearlydefined
 pypi/pypi/-/requests-toolbelt/1.0.0, Apache-2.0, approved, #15024
-pypi/pypi/-/requests/2.32.5, Apache-2.0 AND MIT AND Apache-2.0, approved, #14884
+pypi/pypi/-/requests/2.33.0, Apache-2.0 AND MIT AND Apache-2.0, approved, #27675
 pypi/pypi/-/rich-toolkit/0.19.7, MIT AND (BSD-3-Clause AND MIT), approved, #26762
 pypi/pypi/-/rich/14.3.3, MIT, approved, clearlydefined
 pypi/pypi/-/rpds-py/0.30.0, MIT, approved, clearlydefined
