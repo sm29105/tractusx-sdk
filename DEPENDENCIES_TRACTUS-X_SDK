@@ -2,7 +2,7 @@ pypi/pypi/-/Jinja2/3.1.6, BSD-3-Clause, approved, #7978
 pypi/pypi/-/Markdown/3.10.2, BSD-3-Clause AND BSD-2-Clause AND LicenseRef-scancode-secret-labs-2011, approved, #26769
 pypi/pypi/-/MarkupSafe/3.0.3, BSD-3-Clause, approved, #25777
 pypi/pypi/-/PyYAML/6.0.3, MIT, approved, #25755
-pypi/pypi/-/Pygments/2.19.2, Apache-2.0 AND BSD-3-Clause and BSD-2-Clause and MIT, approved, #19382
+pypi/pypi/-/Pygments/2.20.0, BSD-2-Clause AND LicenseRef-Public-domain AND Apache-2.0 AND MIT, approved, #27129
 pypi/pypi/-/SQLAlchemy/2.0.48, MIT AND LGPL-2.0-only AND BSD-3-Clause AND LGPL-2.0-or-later, approved, #19392
 pypi/pypi/-/annotated-doc/0.0.4, MIT, approved, #24552
 pypi/pypi/-/annotated-types/0.7.0, MIT, approved, clearlydefined
