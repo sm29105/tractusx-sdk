@@ -96,7 +96,7 @@ pypi/pypi/-/typing_extensions/4.15.0, BSD-3-Clause AND Python-2.0 AND PSF-2.0, a
 pypi/pypi/-/tzdata/2025.3, Apache-2.0, approved, #25563
 pypi/pypi/-/urllib3/2.6.3, MIT AND Python-2.0 AND MPL-2.0, approved, #25564
 pypi/pypi/-/uvicorn/0.34.3, BSD-3-Clause, approved, #21063
-pypi/pypi/-/uvloop/0.21.0, (MIT OR Apache-2.0) AND ISC AND (ISC AND LicenseRef-FSF) AND (GPL-2.0-or-later WITH Autoconf-exception-2.0) AND (GPL-3.0-or-later WITH Autoconf-exception-3.0) AND (FSFULLR AND FSFUL AND (GPL-2.0-or-later WITH Libtool-exception)) AND BSD-2-Clause AND MIT AND CC-BY-4.0 AND (FSFUL AND (GPL-2.0-or-later WITH Libtool-exception)) AND LicenseRef-FSF AND FSFULLR AND (X11 AND LicenseRef-Publi-domain), approved, #19385
+pypi/pypi/-/uvloop/0.22.1, Apache-2.0 AND MIT AND ISC AND 0BSD AND GPL-3.0-or-later WITH Autoconf-exception-macro AND GPL-3.0-or-later WITH Autoconf-exception-generic-3.0 AND GPL-2.0-or-later WITH Libtool-exception AND FSFUL AND FSFULLR AND X11 AND CC-BY-4.0 AND LicenseRef-Public-Domain, approved, #27673
 pypi/pypi/-/verspec/0.1.0, Apache-2.0, approved, clearlydefined
 pypi/pypi/-/watchdog/6.0.0, Apache-2.0 AND Python-2.0, approved, #23866
 pypi/pypi/-/watchfiles/1.1.1, MIT, approved, clearlydefined
