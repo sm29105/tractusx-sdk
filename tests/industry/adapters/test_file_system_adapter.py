@@ -35,7 +35,7 @@ class TestFileSystemAdapter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter = FileSystemAdapter(root_path=temp_dir)
 
-            adapter.write({"path": "nested/folder/file.json"}, {"hello": "world"})
+            adapter.write_json({"path": "nested/folder/file.json"}, {"hello": "world"})
 
             written_file = Path(temp_dir) / "nested" / "folder" / "file.json"
             self.assertTrue(written_file.exists())
@@ -44,7 +44,7 @@ class TestFileSystemAdapter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter = FileSystemAdapter(root_path=temp_dir)
 
-            adapter.write({"path": "nested/folder/file.json"}, {"hello": "world"})
+            adapter.write_json({"path": "nested/folder/file.json"}, {"hello": "world"})
             adapter.delete({"path": "nested/folder/file.json"})
 
             nested_folder = Path(temp_dir) / "nested" / "folder"
@@ -57,8 +57,8 @@ class TestFileSystemAdapter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter = FileSystemAdapter(root_path=temp_dir)
 
-            adapter.write({"path": "nested/folder/file1.json"}, {"id": 1})
-            adapter.write({"path": "nested/folder/file2.json"}, {"id": 2})
+            adapter.write_json({"path": "nested/folder/file1.json"}, {"id": 1})
+            adapter.write_json({"path": "nested/folder/file2.json"}, {"id": 2})
 
             adapter.delete({"path": "nested/folder/file1.json"})
 
@@ -71,7 +71,7 @@ class TestFileSystemAdapter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter = FileSystemAdapter(root_path=temp_dir)
 
-            adapter.write({"path": "nested/folder/file.json"}, {"hello": "world"})
+            adapter.write_json({"path": "nested/folder/file.json"}, {"hello": "world"})
 
             self.assertTrue(adapter.exists({"path": "nested/folder/file.json"}))
             content = adapter.read({"path": "nested/folder/file.json"})
@@ -84,7 +84,7 @@ class TestFileSystemAdapter(unittest.TestCase):
                 path_pattern="{asset_path}",
             )
 
-            adapter.write({"asset_path": "nested/folder/file.json"}, {"id": 1})
+            adapter.write_json({"asset_path": "nested/folder/file.json"}, {"id": 1})
 
             self.assertTrue(adapter.exists({"asset_path": "nested/folder/file.json"}))
             adapter.delete({"asset_path": "nested/folder/file.json"})
@@ -98,7 +98,7 @@ class TestFileSystemAdapter(unittest.TestCase):
             )
 
             submodel_metadata = {"asset": "a1", "subdir": "b1", "name": "f1"}
-            adapter.write(submodel_metadata, {"ok": True})
+            adapter.write_json(submodel_metadata, {"ok": True})
 
             expected_file = Path(temp_dir) / "a1" / "b1" / "f1.json"
             self.assertTrue(expected_file.exists())
@@ -113,6 +113,24 @@ class TestFileSystemAdapter(unittest.TestCase):
 
             with self.assertRaises(KeyError):
                 adapter.exists({"path": "nested/folder/file.json"})
+
+    def test_write_json_serializes_and_persists_content(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = FileSystemAdapter(root_path=temp_dir)
+
+            adapter.write_json({"path": "nested/folder/file.json"}, {"hello": "world"})
+
+            content = adapter.read({"path": "nested/folder/file.json"})
+            self.assertEqual(content, {"hello": "world"})
+
+    def test_write_persists_raw_bytes(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = FileSystemAdapter(root_path=temp_dir)
+
+            adapter.write({"path": "nested/folder/file.bin"}, b"raw-bytes")
+
+            file_path = Path(temp_dir) / "nested" / "folder" / "file.bin"
+            self.assertEqual(file_path.read_bytes(), b"raw-bytes")
 
     def test_path_pattern_missing_key_raises_key_error(self):
         with tempfile.TemporaryDirectory() as temp_dir:

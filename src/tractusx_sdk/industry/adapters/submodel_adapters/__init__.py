@@ -21,7 +21,9 @@
 #################################################################################
 
 from .file_system_adapter import FileSystemAdapter
+from .http_submodel_adapter import HttpSubmodelAdapter
 
 __all__ = [
-    'FileSystemAdapter'
+    'FileSystemAdapter',
+    'HttpSubmodelAdapter'
 ]

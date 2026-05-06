@@ -1,6 +1,8 @@
 #################################################################################
 # Eclipse Tractus-X - Software Development KIT
 #
+# Copyright (c) 2026 DRÄXLMAIER Group
+# (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -132,10 +134,25 @@ class FileSystemAdapter(SubmodelAdapter):
         return op.read_json_file(total_path)
          
 
-    def write(self, submodel_metadata: Mapping[str, Any], content) -> None:
+    def write(self, submodel_metadata: Mapping[str, Any], content: bytes) -> None:
         """
-        Write a new file
+        Write raw bytes to a file.
         """
+        if not isinstance(content, bytes):
+            raise TypeError("content must be bytes")
+
+        path = self._extract_relative_path(submodel_metadata)
+        total_path = op.join_paths(self.root_path, path)
+        Path(total_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(total_path).write_bytes(content)
+
+    def write_json(self, submodel_metadata: Mapping[str, Any], content: Mapping[str, Any] | None) -> None:
+        """
+        Write JSON content to a file.
+        """
+        if content is not None and not isinstance(content, Mapping):
+            raise TypeError("content must be a mapping or None")
+
         path = self._extract_relative_path(submodel_metadata)
         total_path = op.join_paths(self.root_path, path)
         Path(total_path).parent.mkdir(parents=True, exist_ok=True)

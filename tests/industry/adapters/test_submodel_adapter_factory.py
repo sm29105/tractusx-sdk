@@ -30,7 +30,7 @@ from tractusx_sdk.industry.adapters.submodel_adapter_factory import (
     SubmodelAdapterFactory,
     SubmodelAdapterType,
 )
-from tractusx_sdk.industry.adapters.submodel_adapters import FileSystemAdapter
+from tractusx_sdk.industry.adapters.submodel_adapters import FileSystemAdapter, HttpSubmodelAdapter
 
 
 class TestSubmodelAdapterFactory(unittest.TestCase):
@@ -212,3 +212,18 @@ class TestSubmodelAdapterFactory(unittest.TestCase):
             submodel_metadata = {"asset": "a1", "name": "f1"}
             adapter.write(submodel_metadata, {"hello": "world"})
             self.assertTrue(adapter.exists(submodel_metadata))
+
+    def test_from_config_http_submodel_success(self):
+        adapter = SubmodelAdapterFactory.from_config(
+            {
+                "type": "http_submodel",
+                "base_url": "https://example.org",
+                "api_path": "/api/v1",
+                "auth_type": "none",
+                "url_pattern": "{base_url}{api_path}/{tenant}/{semantic_id}/{submodel_id}",
+            }
+        )
+
+        self.assertIsInstance(adapter, HttpSubmodelAdapter)
+        self.assertEqual(adapter.base_url, "https://example.org")
+        self.assertEqual(adapter.api_path, "/api/v1")

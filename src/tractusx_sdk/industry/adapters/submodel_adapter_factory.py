@@ -34,6 +34,7 @@ class SubmodelAdapterType(StrEnum):
     and must correspond exactly to the prefix of the adapter class it is associated with.
     """
     FILE_SYSTEM = "FileSystem"
+    HTTP_SUBMODEL = "HttpSubmodel"
 
 class SubmodelAdapterFactory:
     """
