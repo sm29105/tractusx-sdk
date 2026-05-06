@@ -24,6 +24,7 @@
 
 import unittest
 import tempfile
+import os
 from types import SimpleNamespace
 
 from tractusx_sdk.industry.adapters.submodel_adapter_factory import (
@@ -44,65 +45,63 @@ class TestSubmodelAdapterFactory(unittest.TestCase):
 
         self.assertIsNotNone(adapter)
         self.assertIsInstance(adapter, FileSystemAdapter)
-        self.assertEqual(adapter.root_path, "./submodels")
+        self.assertEqual(adapter.root_path, os.path.abspath("./submodels"))
 
     def test_from_config_success(self):
         adapter = SubmodelAdapterFactory.from_config(
-            {
-                "type": "file_system",
+            adapter_type="file_system",
+            config={
                 "root_path": "./submodels",
-            }
+            },
         )
 
         self.assertIsInstance(adapter, FileSystemAdapter)
-        self.assertEqual(adapter.root_path, "./submodels")
+        self.assertEqual(adapter.root_path, os.path.abspath("./submodels"))
 
-    def test_from_config_custom_type_key_success(self):
+    def test_from_config_enum_type_success(self):
         adapter = SubmodelAdapterFactory.from_config(
-            {
-                "adapter": SubmodelAdapterType.FILE_SYSTEM,
+            adapter_type=SubmodelAdapterType.FILE_SYSTEM,
+            config={
                 "root_path": "./custom-submodels",
             },
-            type_key="adapter",
         )
 
         self.assertIsInstance(adapter, FileSystemAdapter)
-        self.assertEqual(adapter.root_path, "./custom-submodels")
+        self.assertEqual(adapter.root_path, os.path.abspath("./custom-submodels"))
 
-    def test_from_config_missing_type_key(self):
-        with self.assertRaises(ValueError):
+    def test_from_config_non_mapping_config_type_error(self):
+        with self.assertRaises(TypeError):
             SubmodelAdapterFactory.from_config(
-                {
-                    "root_path": "./submodels",
-                }
+                adapter_type="file_system",
+                config=["root_path", "./submodels"],
             )
 
     def test_from_config_unsupported_type(self):
         with self.assertRaises(ValueError):
             SubmodelAdapterFactory.from_config(
-                {
-                    "type": "unsupported",
+                adapter_type="unsupported",
+                config={
                     "root_path": "./submodels",
-                }
+                },
             )
 
     def test_from_config_unknown_builder_key(self):
         with self.assertRaises(ValueError):
             SubmodelAdapterFactory.from_config(
-                {
-                    "type": "file_system",
+                adapter_type="file_system",
+                config={
                     "root_path": "./submodels",
                     "unknown": "value",
-                }
+                },
             )
 
     def test_from_config_builder_attribute_type_mismatch(self):
         with self.assertRaises(TypeError):
             SubmodelAdapterFactory.from_config(
-                {
-                    "type": "file_system",
+                adapter_type="file_system",
+                config={
                     "root_path": 123,
-                }
+                },
             )
 
     def test_adapter_type_listings_before_and_after_external_registration(self):
@@ -144,11 +143,11 @@ class TestSubmodelAdapterFactory(unittest.TestCase):
         )
 
         adapter = SubmodelAdapterFactory.from_config(
-            {
-                "type": "external_builder",
+            adapter_type="external_builder",
+            config={
                 "base_url": "https://example.org",
                 "api_key": "token",
-            }
+            },
         )
 
         self.assertEqual(adapter.base_url, "https://example.org")
@@ -177,10 +176,10 @@ class TestSubmodelAdapterFactory(unittest.TestCase):
         )
 
         adapter = SubmodelAdapterFactory.from_config(
-            {
-                "type": "external_class",
+            adapter_type="external_class",
+            config={
                 "root_path": "./outside",
-            }
+            },
         )
 
         self.assertEqual(adapter.source, "external_class")
@@ -189,39 +188,39 @@ class TestSubmodelAdapterFactory(unittest.TestCase):
     def test_from_config_file_system_with_path_pattern_simple_key(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter = SubmodelAdapterFactory.from_config(
-                {
-                    "type": "file_system",
+                adapter_type="file_system",
+                config={
                     "root_path": temp_dir,
                     "path_pattern": "{asset_path}",
-                }
+                },
             )
 
-            adapter.write({"asset_path": "nested/folder/file.json"}, {"hello": "world"})
+            adapter.write_json({"asset_path": "nested/folder/file.json"}, {"hello": "world"})
             self.assertTrue(adapter.exists({"asset_path": "nested/folder/file.json"}))
 
     def test_from_config_file_system_with_path_pattern(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter = SubmodelAdapterFactory.from_config(
-                {
-                    "type": "file_system",
+                adapter_type="file_system",
+                config={
                     "root_path": temp_dir,
                     "path_pattern": "{asset}/{name}.json",
-                }
+                },
             )
 
             submodel_metadata = {"asset": "a1", "name": "f1"}
-            adapter.write(submodel_metadata, {"hello": "world"})
+            adapter.write_json(submodel_metadata, {"hello": "world"})
             self.assertTrue(adapter.exists(submodel_metadata))
 
     def test_from_config_http_submodel_success(self):
         adapter = SubmodelAdapterFactory.from_config(
-            {
-                "type": "http_submodel",
+            adapter_type="http_submodel",
+            config={
                 "base_url": "https://example.org",
                 "api_path": "/api/v1",
                 "auth_type": "none",
                 "url_pattern": "{base_url}{api_path}/{tenant}/{semantic_id}/{submodel_id}",
-            }
+            },
         )
 
         self.assertIsInstance(adapter, HttpSubmodelAdapter)

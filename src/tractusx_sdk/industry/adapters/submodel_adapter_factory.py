@@ -51,10 +51,8 @@ class SubmodelAdapterFactory:
         Create a built-in adapter from configuration::
 
             adapter = SubmodelAdapterFactory.from_config(
-                {
-                    "type": "file_system",
-                    "root_path": "./submodels",
-                }
+                adapter_type="file_system",
+                config={"root_path": "./submodels"},
             )
     """
     _registered_builders: dict[str, Callable[[], Any]] = {}
@@ -308,55 +306,33 @@ class SubmodelAdapterFactory:
             return str(annotation)
 
     @staticmethod
-    def from_config(config: Mapping[str, Any], type_key: str = "type"):
+    def from_config(adapter_type: str | SubmodelAdapterType, config: Mapping[str, Any]):
         """
         Create a submodel adapter from key-value configuration.
 
-        The adapter type is derived from ``config[type_key]`` and all remaining keys are
-        passed to builder methods with the same name.
+        The adapter type is provided explicitly and all config keys are passed
+        to builder methods with the same name.
 
+        :param adapter_type: Adapter type identifier.
         :param config: Configuration map used to construct the adapter.
-        :param type_key: Key containing the adapter type value.
         :return: Constructed adapter instance.
         :raises TypeError: If ``config`` is not a mapping.
-        :raises ValueError: If config validation or builder key resolution fails.
+        :raises ValueError: If builder key resolution fails.
 
         Examples:
-            Use the default type key::
+            Create with explicit adapter type::
 
                 adapter = SubmodelAdapterFactory.from_config(
-                    {
-                        "type": "file_system",
-                        "root_path": "./submodels",
-                    }
-                )
-
-            Use a custom type key::
-
-                adapter = SubmodelAdapterFactory.from_config(
-                    {
-                        "adapter": "file_system",
-                        "root_path": "./submodels",
-                    },
-                    type_key="adapter",
+                    adapter_type="file_system",
+                    config={"root_path": "./submodels"},
                 )
         """
         if not isinstance(config, Mapping):
             raise TypeError("config must be a mapping")
 
-        if not type_key or not isinstance(type_key, str):
-            raise ValueError("type_key must be a non-empty string")
-
-        if type_key not in config:
-            raise ValueError(f"Missing required config key '{type_key}'")
-
-        adapter_type = config[type_key]
         builder = SubmodelAdapterFactory._get_adapter_builder(adapter_type=adapter_type)
 
         for key, value in config.items():
-            if key == type_key:
-                continue
-            
             builder_method = getattr(builder, key, None)
             if not callable(builder_method):
                 raise ValueError(f"Unsupported config key '{key}' for adapter type '{adapter_type}'")
@@ -378,11 +354,12 @@ class SubmodelAdapterFactory:
         return builder.build()
     
     @staticmethod
-    def get_file_system(root_path: str = "./submodel"):
+    def get_file_system(root_path: str = "./submodel", path_pattern: str = "{asset_path}") -> Any:
         """
         Create a file system submodel adapter.
 
         :param root_path: Root directory for submodel storage.
+        :param path_pattern: Pattern for submodel paths.
         :return: Built file system adapter instance.
 
         Example:
@@ -391,8 +368,9 @@ class SubmodelAdapterFactory:
                 adapter = SubmodelAdapterFactory.get_file_system("./submodels")
         """
         return SubmodelAdapterFactory.from_config(
-            {
-                "type": SubmodelAdapterType.FILE_SYSTEM,
+            adapter_type=SubmodelAdapterType.FILE_SYSTEM,
+            config={
                 "root_path": root_path,
-            }
+                "path_pattern": path_pattern,
+            },
         )
