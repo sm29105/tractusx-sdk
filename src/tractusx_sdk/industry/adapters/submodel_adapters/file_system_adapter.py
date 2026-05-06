@@ -21,12 +21,35 @@
 #################################################################################
 
 from .. import SubmodelAdapter
+import os
+from pathlib import Path
 from tractusx_sdk.dataspace.tools import op
 from typing import List
 
 class FileSystemAdapter(SubmodelAdapter):
 
     def __init__(self, root_path: str):
+        # Convert relative path to absolute path if needed
+        if not os.path.isabs(root_path):
+            root_path = os.path.abspath(root_path)
+        
+        # Ensure the directory exists and check permissions
+        try:
+            path_obj = Path(root_path)
+            path_obj.mkdir(parents=True, exist_ok=True)
+            
+            # Check if we have write permissions using os.access()
+            if not os.access(root_path, os.W_OK):
+                raise PermissionError(
+                    f"No write permission for directory: {root_path}"
+                )
+            
+        except PermissionError as e:
+            raise PermissionError(
+                f"Permission denied accessing submodel storage path: {root_path}. Error: {e}" 
+            ) from e
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize submodel storage: {e}") from e
         self.root_path = root_path
         print("FileSystem initilized")
 
@@ -39,7 +62,7 @@ class FileSystemAdapter(SubmodelAdapter):
             self.cls = cls
             self._data = {}
 
-        def root_path(self, path:str):
+        def root_path(self, path: str):
             self._data["root_path"] = path
             return self
         
