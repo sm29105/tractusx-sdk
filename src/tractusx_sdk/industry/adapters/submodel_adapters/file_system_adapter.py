@@ -70,6 +70,20 @@ class FileSystemAdapter(SubmodelAdapter):
             if "root_path" not in self._data:
                 raise ValueError("Missing required buider parameter: root_path")
             return self.cls(**self._data)
+
+    def _cleanup_empty_parent_directories(self, file_path: str) -> None:
+        """
+        Remove empty parent directories up to (but excluding) root_path.
+        """
+        current = Path(file_path).parent
+        root = Path(self.root_path)
+
+        while current != root and current.exists():
+            try:
+                current.rmdir()
+            except OSError:
+                break
+            current = current.parent
     
 
     def read(self, path: str):
@@ -85,6 +99,7 @@ class FileSystemAdapter(SubmodelAdapter):
         Write a new file
         """
         total_path = op.join_paths(self.root_path, path)
+        Path(total_path).parent.mkdir(parents=True, exist_ok=True)
         op.to_json_file(content, json_file_path=total_path)
 
     def delete(self, path: str) -> None:
@@ -93,6 +108,7 @@ class FileSystemAdapter(SubmodelAdapter):
         """
         total_path = op.join_paths(self.root_path, path)
         op.delete_file(total_path)
+        self._cleanup_empty_parent_directories(total_path)
 
     def exists(self, path: str) -> bool:
         """
@@ -119,16 +135,3 @@ class FileSystemAdapter(SubmodelAdapter):
         return results
 
 
-    def create_directory(self, path: str) -> None:
-        """
-        Create a directory
-        """
-        total_path = op.join_paths(self.root_path, path)
-        op.make_dir(total_path)
-
-    def delete_directory(self, path: str) -> None:
-        """
-        Remove a directory
-        """
-        total_path = op.join_paths(self.root_path, path)
-        op.delete_dir(total_path)   
