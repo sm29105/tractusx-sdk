@@ -95,6 +95,23 @@ class TestSubmodelAdapterFactory(unittest.TestCase):
                 }
             )
 
+    def test_adapter_type_listings_before_and_after_external_registration(self):
+        self.assertNotIn("file_system", SubmodelAdapterFactory.get_registered_adapter_types())
+        self.assertIn("file_system", SubmodelAdapterFactory.get_available_adapter_types())
+
+        class ExternalBuilder:
+            def build(self):
+                return SimpleNamespace()
+
+        SubmodelAdapterFactory.register_adapter(
+            adapter_type="external_builder",
+            builder_factory=ExternalBuilder,
+        )
+
+        self.assertIn("external_builder", SubmodelAdapterFactory.get_registered_adapter_types())
+        self.assertIn("external_builder", SubmodelAdapterFactory.get_available_adapter_types())
+        self.assertIn("file_system", SubmodelAdapterFactory.get_available_adapter_types())
+
     def test_register_external_builder_and_create_from_config(self):
         class ExternalBuilder:
             def __init__(self):

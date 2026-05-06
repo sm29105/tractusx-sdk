@@ -180,6 +180,10 @@ class SubmodelAdapterFactory:
         """
         Return all currently registered external adapter type keys.
 
+        This method only reports adapters registered at runtime through
+        ``register_adapter``. Built-in adapters declared in
+        ``SubmodelAdapterType`` are intentionally excluded.
+
         :return: Sorted list of registered adapter keys.
 
         Example:
@@ -188,6 +192,29 @@ class SubmodelAdapterFactory:
                 types = SubmodelAdapterFactory.get_registered_adapter_types()
         """
         return sorted(SubmodelAdapterFactory._registered_builders.keys())
+
+    @staticmethod
+    def get_available_adapter_types() -> list[str]:
+        """
+        Return all available adapter type keys.
+
+        This method combines:
+        - Built-in adapter types from ``SubmodelAdapterType``.
+        - External adapter types registered via ``register_adapter``.
+
+        Built-in and external values are normalized to the same lowercase
+        underscore style.
+
+        :return: Sorted list of all available adapter keys.
+
+        Example:
+            Inspect all available adapters::
+
+                types = SubmodelAdapterFactory.get_available_adapter_types()
+        """
+        builtins = [item.name.lower() for item in SubmodelAdapterType]
+        externals = SubmodelAdapterFactory.get_registered_adapter_types()
+        return sorted(set(builtins + externals))
 
     @staticmethod
     def _get_adapter_builder(
@@ -209,8 +236,7 @@ class SubmodelAdapterFactory:
             if adapter_key in SubmodelAdapterFactory._registered_builders:
                 return SubmodelAdapterFactory._registered_builders[adapter_key]()
 
-            allowed = [item.name.lower() for item in SubmodelAdapterType]
-            allowed.extend(SubmodelAdapterFactory.get_registered_adapter_types())
+            allowed = SubmodelAdapterFactory.get_available_adapter_types()
             raise ValueError(
                 f"Unsupported adapter type '{adapter_type}'. Allowed values: {', '.join(sorted(set(allowed)))}"
             )
