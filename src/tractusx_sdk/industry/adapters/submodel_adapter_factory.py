@@ -23,8 +23,10 @@
 #################################################################################
 
 from enum import StrEnum
+import inspect
 from importlib import import_module
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Union, get_args, get_origin
+import types
 
 class SubmodelAdapterType(StrEnum):
     """
@@ -259,6 +261,52 @@ class SubmodelAdapterFactory:
             ) from import_exception
 
     @staticmethod
+    def _is_value_compatible_with_annotation(annotation: Any, value: Any) -> bool:
+        """
+        Check whether a value matches a type annotation when runtime checking is possible.
+
+        Non-runtime-checkable annotations are treated as compatible.
+        """
+        if annotation is inspect.Signature.empty or annotation is Any:
+            return True
+
+        if annotation is None or annotation is type(None):
+            return value is None
+
+        origin = get_origin(annotation)
+        if origin is None:
+            if isinstance(annotation, type):
+                return isinstance(value, annotation)
+            return True
+
+        if origin in (Union, types.UnionType):
+            return any(
+                SubmodelAdapterFactory._is_value_compatible_with_annotation(item, value)
+                for item in get_args(annotation)
+            )
+
+        if origin in (list, dict, tuple, set, frozenset):
+            return isinstance(value, origin)
+
+        try:
+            return isinstance(value, origin)
+        except TypeError:
+            return True
+
+    @staticmethod
+    def _annotation_to_display_name(annotation: Any) -> str:
+        """
+        Return a compact human-readable annotation name for error messages.
+        """
+        if annotation is inspect.Signature.empty:
+            return "Any"
+
+        try:
+            return annotation.__name__
+        except AttributeError:
+            return str(annotation)
+
+    @staticmethod
     def from_config(config: Mapping[str, Any], type_key: str = "type"):
         """
         Create a submodel adapter from key-value configuration.
@@ -307,10 +355,22 @@ class SubmodelAdapterFactory:
         for key, value in config.items():
             if key == type_key:
                 continue
-
+            
             builder_method = getattr(builder, key, None)
             if not callable(builder_method):
                 raise ValueError(f"Unsupported config key '{key}' for adapter type '{adapter_type}'")
+
+            # Perform runtime type checking against the builder method's first parameter annotation, if available
+            parameters = list(inspect.signature(builder_method).parameters.values())
+            if parameters:
+                expected_annotation = parameters[0].annotation
+                if not SubmodelAdapterFactory._is_value_compatible_with_annotation(expected_annotation, value):
+                    expected = SubmodelAdapterFactory._annotation_to_display_name(expected_annotation)
+                    actual = type(value).__name__
+                    raise TypeError(
+                        f"Invalid type for config key '{key}' for adapter type '{adapter_type}': "
+                        f"expected '{expected}', got '{actual}'"
+                    )
 
             builder_method(value)
 

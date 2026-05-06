@@ -95,6 +95,15 @@ class TestSubmodelAdapterFactory(unittest.TestCase):
                 }
             )
 
+    def test_from_config_builder_attribute_type_mismatch(self):
+        with self.assertRaises(TypeError):
+            SubmodelAdapterFactory.from_config(
+                {
+                    "type": "file_system",
+                    "root_path": 123,
+                }
+            )
+
     def test_adapter_type_listings_before_and_after_external_registration(self):
         self.assertNotIn("file_system", SubmodelAdapterFactory.get_registered_adapter_types())
         self.assertIn("file_system", SubmodelAdapterFactory.get_available_adapter_types())
