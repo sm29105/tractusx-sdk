@@ -21,6 +21,7 @@
 #################################################################################
 
 from abc import ABC, abstractmethod
+from typing import Any, Mapping
 
 class SubmodelAdapter(ABC):
     """
@@ -28,29 +29,41 @@ class SubmodelAdapter(ABC):
     """
 
     @abstractmethod
-    def read(self, path: str):
+    def read(self, submodel_metadata: Mapping[str, Any]):
         """
-        Return the entire content of a file
+        Return the entire content of a file.
+
+        :param submodel_metadata: Path information as key/value pairs for
+            adapter-specific resolution.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def write(self, path: str, content: bytes) -> None:
+    def write(self, submodel_metadata: Mapping[str, Any], content: bytes) -> None:
         """
-        Write a new file
+        Write a new file.
+
+        :param submodel_metadata: Path information as key/value pairs for
+            adapter-specific resolution.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, path: str) -> None:
+    def delete(self, submodel_metadata: Mapping[str, Any]) -> None:
         """
-        Delete a specific file
+        Delete a specific file.
+
+        :param submodel_metadata: Path information as key/value pairs for
+            adapter-specific resolution.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def exists(self, path: str) -> bool:
+    def exists(self, submodel_metadata: Mapping[str, Any]) -> bool:
         """
-        Check if a file exists
+        Check if a file exists.
+
+        :param submodel_metadata: Path information as key/value pairs for
+            adapter-specific resolution.
         """
         raise NotImplementedError

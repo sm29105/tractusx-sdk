@@ -23,6 +23,7 @@
 #################################################################################
 
 import unittest
+import tempfile
 from types import SimpleNamespace
 
 from tractusx_sdk.industry.adapters.submodel_adapter_factory import (
@@ -184,3 +185,30 @@ class TestSubmodelAdapterFactory(unittest.TestCase):
 
         self.assertEqual(adapter.source, "external_class")
         self.assertEqual(adapter.root_path, "./outside")
+
+    def test_from_config_file_system_with_path_pattern_simple_key(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = SubmodelAdapterFactory.from_config(
+                {
+                    "type": "file_system",
+                    "root_path": temp_dir,
+                    "path_pattern": "{asset_path}",
+                }
+            )
+
+            adapter.write({"asset_path": "nested/folder/file.json"}, {"hello": "world"})
+            self.assertTrue(adapter.exists({"asset_path": "nested/folder/file.json"}))
+
+    def test_from_config_file_system_with_path_pattern(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = SubmodelAdapterFactory.from_config(
+                {
+                    "type": "file_system",
+                    "root_path": temp_dir,
+                    "path_pattern": "{asset}/{name}.json",
+                }
+            )
+
+            submodel_metadata = {"asset": "a1", "name": "f1"}
+            adapter.write(submodel_metadata, {"hello": "world"})
+            self.assertTrue(adapter.exists(submodel_metadata))

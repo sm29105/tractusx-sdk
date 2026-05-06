@@ -35,7 +35,7 @@ class TestFileSystemAdapter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter = FileSystemAdapter(root_path=temp_dir)
 
-            adapter.write("nested/folder/file.json", {"hello": "world"})
+            adapter.write({"path": "nested/folder/file.json"}, {"hello": "world"})
 
             written_file = Path(temp_dir) / "nested" / "folder" / "file.json"
             self.assertTrue(written_file.exists())
@@ -44,8 +44,8 @@ class TestFileSystemAdapter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter = FileSystemAdapter(root_path=temp_dir)
 
-            adapter.write("nested/folder/file.json", {"hello": "world"})
-            adapter.delete("nested/folder/file.json")
+            adapter.write({"path": "nested/folder/file.json"}, {"hello": "world"})
+            adapter.delete({"path": "nested/folder/file.json"})
 
             nested_folder = Path(temp_dir) / "nested" / "folder"
             nested_root = Path(temp_dir) / "nested"
@@ -57,12 +57,76 @@ class TestFileSystemAdapter(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             adapter = FileSystemAdapter(root_path=temp_dir)
 
-            adapter.write("nested/folder/file1.json", {"id": 1})
-            adapter.write("nested/folder/file2.json", {"id": 2})
+            adapter.write({"path": "nested/folder/file1.json"}, {"id": 1})
+            adapter.write({"path": "nested/folder/file2.json"}, {"id": 2})
 
-            adapter.delete("nested/folder/file1.json")
+            adapter.delete({"path": "nested/folder/file1.json"})
 
             nested_folder = Path(temp_dir) / "nested" / "folder"
             remaining_file = nested_folder / "file2.json"
             self.assertTrue(nested_folder.exists())
             self.assertTrue(remaining_file.exists())
+
+    def test_submodel_metadata_mapping_with_default_path_key(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = FileSystemAdapter(root_path=temp_dir)
+
+            adapter.write({"path": "nested/folder/file.json"}, {"hello": "world"})
+
+            self.assertTrue(adapter.exists({"path": "nested/folder/file.json"}))
+            content = adapter.read({"path": "nested/folder/file.json"})
+            self.assertEqual(content["hello"], "world")
+
+    def test_submodel_metadata_mapping_with_custom_path_key(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = FileSystemAdapter(
+                root_path=temp_dir,
+                path_pattern="{asset_path}",
+            )
+
+            adapter.write({"asset_path": "nested/folder/file.json"}, {"id": 1})
+
+            self.assertTrue(adapter.exists({"asset_path": "nested/folder/file.json"}))
+            adapter.delete({"asset_path": "nested/folder/file.json"})
+            self.assertFalse(adapter.exists({"asset_path": "nested/folder/file.json"}))
+
+    def test_path_pattern_with_multiple_keys(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = FileSystemAdapter(
+                root_path=temp_dir,
+                path_pattern="{asset}/{subdir}/{name}.json",
+            )
+
+            submodel_metadata = {"asset": "a1", "subdir": "b1", "name": "f1"}
+            adapter.write(submodel_metadata, {"ok": True})
+
+            expected_file = Path(temp_dir) / "a1" / "b1" / "f1.json"
+            self.assertTrue(expected_file.exists())
+            self.assertTrue(adapter.exists(submodel_metadata))
+
+    def test_submodel_metadata_mapping_missing_key_raises_key_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = FileSystemAdapter(
+                root_path=temp_dir,
+                path_pattern="{asset_path}",
+            )
+
+            with self.assertRaises(KeyError):
+                adapter.exists({"path": "nested/folder/file.json"})
+
+    def test_path_pattern_missing_key_raises_key_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = FileSystemAdapter(
+                root_path=temp_dir,
+                path_pattern="{asset}/{name}.json",
+            )
+
+            with self.assertRaises(KeyError):
+                adapter.exists({"asset": "a1"})
+
+    def test_string_submodel_metadata_is_not_supported(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            adapter = FileSystemAdapter(root_path=temp_dir)
+
+            with self.assertRaises(TypeError):
+                adapter.exists("nested/folder/file.json")

@@ -24,11 +24,15 @@ from .. import SubmodelAdapter
 import os
 from pathlib import Path
 from tractusx_sdk.dataspace.tools import op
-from typing import List
+from typing import Any, List, Mapping
 
 class FileSystemAdapter(SubmodelAdapter):
 
-    def __init__(self, root_path: str):
+    def __init__(
+            self,
+            root_path: str,
+            path_pattern: str | None = None,
+    ):
         # Convert relative path to absolute path if needed
         if not os.path.isabs(root_path):
             root_path = os.path.abspath(root_path)
@@ -51,6 +55,16 @@ class FileSystemAdapter(SubmodelAdapter):
         except Exception as e:
             raise RuntimeError(f"Failed to initialize submodel storage: {e}") from e
         self.root_path = root_path
+
+        # Default pattern maps submodel_metadata["path"] directly to a file path.
+        self.path_pattern = "{path}"
+
+        # Explicit pattern can redefine how submodel_metadata fields map to a path.
+        if path_pattern is not None:
+            self.path_pattern = path_pattern
+
+        if not isinstance(self.path_pattern, str) or not self.path_pattern.strip():
+            raise ValueError("path_pattern must be a non-empty string")
         print("FileSystem initilized")
 
     @classmethod
@@ -65,11 +79,34 @@ class FileSystemAdapter(SubmodelAdapter):
         def root_path(self, path: str):
             self._data["root_path"] = path
             return self
+
+        def path_pattern(self, pattern: str):
+            self._data["path_pattern"] = pattern
+            return self
         
         def build(self):
             if "root_path" not in self._data:
                 raise ValueError("Missing required buider parameter: root_path")
             return self.cls(**self._data)
+
+    def _extract_relative_path(self, submodel_metadata: Mapping[str, Any]) -> str:
+        """
+        Resolve the relative file path from key/value input.
+        """
+        if not isinstance(submodel_metadata, Mapping):
+            raise TypeError("submodel_metadata must be a mapping")
+
+        try:
+            relative_path = self.path_pattern.format(**submodel_metadata)
+        except KeyError as key_error:
+            raise KeyError(
+                f"Missing required path key '{key_error.args[0]}' for pattern '{self.path_pattern}'"
+            ) from key_error
+
+        if not isinstance(relative_path, str) or not relative_path.strip():
+            raise ValueError("Resolved path value must be a non-empty string")
+
+        return relative_path
 
     def _cleanup_empty_parent_directories(self, file_path: str) -> None:
         """
@@ -86,34 +123,38 @@ class FileSystemAdapter(SubmodelAdapter):
             current = current.parent
     
 
-    def read(self, path: str):
+    def read(self, submodel_metadata: Mapping[str, Any]):
         """
         Return the entire content of a file
         """
+        path = self._extract_relative_path(submodel_metadata)
         total_path = op.join_paths(self.root_path, path)
         return op.read_json_file(total_path)
          
 
-    def write(self, path: str, content) -> None:
+    def write(self, submodel_metadata: Mapping[str, Any], content) -> None:
         """
         Write a new file
         """
+        path = self._extract_relative_path(submodel_metadata)
         total_path = op.join_paths(self.root_path, path)
         Path(total_path).parent.mkdir(parents=True, exist_ok=True)
         op.to_json_file(content, json_file_path=total_path)
 
-    def delete(self, path: str) -> None:
+    def delete(self, submodel_metadata: Mapping[str, Any]) -> None:
         """
         Delete a specific file
         """
+        path = self._extract_relative_path(submodel_metadata)
         total_path = op.join_paths(self.root_path, path)
         op.delete_file(total_path)
         self._cleanup_empty_parent_directories(total_path)
 
-    def exists(self, path: str) -> bool:
+    def exists(self, submodel_metadata: Mapping[str, Any]) -> bool:
         """
         Check if a file exists
         """
+        path = self._extract_relative_path(submodel_metadata)
         total_path = op.join_paths(self.root_path, path)
         return op.path_exists(total_path)
 
